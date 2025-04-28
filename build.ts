@@ -2,7 +2,7 @@
 import { build, type BuildConfig } from "bun";
 import plugin from "bun-plugin-tailwind";
 import { existsSync } from "fs";
-import { rm } from "fs/promises";
+import { rm, cp, mkdir } from "fs/promises";
 import path from "path";
 
 // Print help text if requested
@@ -164,6 +164,22 @@ const outputTable = result.outputs.map(output => ({
 }));
 
 console.table(outputTable);
+
+// Copy public directory to dist/assets
+console.log("\n📁 Copying public assets to dist/assets...");
+
+const assetsDir = path.join(outdir, "assets");
+if (!existsSync(assetsDir)) {
+  await mkdir(assetsDir, { recursive: true });
+}
+
+try {
+  await cp("public", assetsDir, { recursive: true });
+  console.log("✅ Assets copied successfully");
+} catch (error: any) {
+  console.error(`Error copying assets: ${error?.message || String(error)}`);
+}
+
 const buildTime = (end - start).toFixed(2);
 
 console.log(`\n✅ Build completed in ${buildTime}ms\n`);
