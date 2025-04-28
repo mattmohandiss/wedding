@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useCountdown } from '../utils/countdown';
+import FlowerAnimation from './FlowerAnimation';
 
 interface HeaderProps {
   activeSection: string;
@@ -17,6 +18,9 @@ export const Header = ({ activeSection, onSectionChange }: HeaderProps) => {
 
   return (
     <header className="text-center mb-12 relative">
+      <div className="mb-2">
+        <FlowerAnimation scale={0.3} duration={3000} />
+      </div>
       <div className="mb-8">        
         <h1 className="text-5xl tracking-wider mb-4">MATT & LAUREN</h1>
         <p className="text-lg tracking-wide mb-2.5">JULY 20, 2025 • DURHAM, NC</p>
