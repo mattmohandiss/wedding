@@ -8,6 +8,7 @@ import WeddingPartySection from './components/WeddingPartySection';
 import QAndASection from './components/QAndASection';
 import TravelSection from './components/TravelSection';
 import ThingsToDoSection from './components/ThingsToDoSection';
+import RSVPSection from './components/RSVP/RSVPSection';
 import Footer from './components/Footer';
 
 export function App() {
@@ -47,6 +48,7 @@ export function App() {
       <QAndASection isActive={activeSection === 'q-and-a'} />
       <TravelSection isActive={activeSection === 'travel'} />
       <ThingsToDoSection isActive={activeSection === 'things-to-do'} />
+      <RSVPSection isActive={activeSection === 'rsvp'} />
       
       <Footer />
     </div>

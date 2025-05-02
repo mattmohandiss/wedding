@@ -85,6 +85,15 @@ export const Header = ({ activeSection, onSectionChange }: HeaderProps) => {
               Things to Do
             </a>
           </li>
+          <li className="mx-4">
+            <a 
+              href="#rsvp" 
+              onClick={(e) => handleNavClick(e, 'rsvp')}
+              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'rsvp' ? 'after:w-full' : ''}`}
+            >
+              RSVP
+            </a>
+          </li>
         </ul>
       </nav>
     </header>
