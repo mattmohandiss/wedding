@@ -273,13 +273,14 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
               <div key={index} className="bg-white p-3 rounded border border-gray-100 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-800">{member.name}</span>
-                  <Toggle
-                    isOn={member.isAttending}
-                    onChange={(newValue) => handleAttendanceToggle(index, newValue)}
-                    labelOn="Attending"
-                    labelOff="Not Attending"
-                    disabled={isSubmitting}
-                  />
+                  <div className="flex items-center">
+                    <span className="mr-2 text-sm text-gray-700">Attending:</span>
+                    <Toggle
+                      isOn={member.isAttending}
+                      onChange={(newValue) => handleAttendanceToggle(index, newValue)}
+                      disabled={isSubmitting}
+                    />
+                  </div>
                 </div>
                 
                 {member.isAttending && (

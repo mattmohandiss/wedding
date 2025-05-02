@@ -13,30 +13,41 @@ export interface ToggleProps {
 export const Toggle: React.FC<ToggleProps> = ({
   isOn,
   onChange,
-  labelOn = 'On',
-  labelOff = 'Off',
+  labelOn = 'yes',
+  labelOff = 'no',
   disabled = false
 }) => {
   return (
-    <div className="flex items-center justify-center space-x-4">
-      <span className={`text-sm ${isOn ? 'text-gray-800' : 'text-gray-400'}`}>
-        {isOn ? labelOn : labelOff}
-      </span>
+    <div className="flex items-center justify-center">
       <button
         type="button"
         onClick={() => onChange(!isOn)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 ${
-          isOn ? 'bg-green-500' : 'bg-gray-200'
-        }`}
+        className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 ${isOn ? 'bg-green-400' : 'bg-red-400'
+          }`}
         disabled={disabled}
         aria-pressed={isOn}
         aria-label={isOn ? labelOn : labelOff}
       >
+        {/* The white circle indicator */}
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-            isOn ? 'translate-x-6' : 'translate-x-1'
-          }`}
+          className={`absolute inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${isOn ? 'right-1' : 'left-1'
+            }`}
         />
+
+        {/* Container to center text vertically */}
+        <div className="absolute inset-0 flex items-center justify-between px-3">
+
+
+          {/* Text that shows when toggle is ON (yes) */}
+          <span className={`text-xs font-medium text-white transition-opacity ${isOn ? 'opacity-100' : 'opacity-0'}`}>
+            {labelOn}
+          </span>
+
+          {/* Text that shows when toggle is OFF (no) */}
+          <span className={`text-xs font-medium text-white transition-opacity ${isOn ? 'opacity-0' : 'opacity-100'}`}>
+            {labelOff}
+          </span>
+        </div>
       </button>
     </div>
   );
@@ -51,21 +62,20 @@ export const StageIndicator: React.FC<StageIndicatorProps> = ({
   currentStage
 }) => {
   const stages: FormStage[] = ['nameSelection', 'detailsSubmission'];
-  
+
   return (
     <div className="flex justify-center mb-4">
       <div className="flex items-center">
         {stages.map((stage, index) => (
           <React.Fragment key={stage}>
-            <div 
-              className={`h-2 w-2 rounded-full ${
-                currentStage === stage ? 'bg-gray-800' : 'bg-gray-300'
-              }`}
+            <div
+              className={`h-2 w-2 rounded-full ${currentStage === stage ? 'bg-gray-800' : 'bg-gray-300'
+                }`}
               aria-current={currentStage === stage}
               role="tab"
               aria-label={`Stage ${index + 1}`}
             />
-            
+
             {index < stages.length - 1 && (
               <div className="h-0.5 w-10 bg-gray-300" aria-hidden="true" />
             )}
@@ -110,7 +120,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
   // Reset filtered options when options change
   useEffect(() => {
     if (inputValue.trim() !== '') {
@@ -123,12 +133,12 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
       setFiltered([]);
       return;
     }
-    
+
     const filteredOptions = options.filter(guest =>
       guest.fullName.toLowerCase().includes(value.toLowerCase()) ||
       `${guest.lastName}, ${guest.firstName}`.toLowerCase().includes(value.toLowerCase())
     );
-    
+
     setFiltered(filteredOptions);
     setActiveIndex(0);
   };
@@ -138,7 +148,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
     setInputValue(val);
     filterOptions(val);
     setShowList(true);
-    
+
     // Call the onChange callback if it exists
     if (onChange) {
       onChange(val);
@@ -150,7 +160,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
     setShowList(false);
     onSelect(guest);
   };
-  
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (filtered.length === 0 || !showList) return;
 
@@ -174,8 +184,8 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
   };
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="relative w-full"
     >
       <input
@@ -201,9 +211,8 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
             <li
               key={`${guest.firstName}-${guest.lastName}-${index}`}
               onClick={() => handleSelect(guest)}
-              className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                index === activeIndex ? 'bg-gray-100' : ''
-              }`}
+              className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 ${index === activeIndex ? 'bg-gray-100' : ''
+                }`}
               role="option"
               aria-selected={index === activeIndex}
             >
@@ -236,13 +245,13 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
   visible
 }) => {
   console.warn('SuggestionsList is deprecated. Please use DropdownInput instead.');
-  
+
   if (!visible || suggestions.length === 0) {
     return null;
   }
 
   return (
-    <div 
+    <div
       className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-auto"
       role="listbox"
       aria-label="Suggested guests"
@@ -252,9 +261,8 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
         <button
           key={`${guest.firstName}-${guest.lastName}-${index}`}
           type="button"
-          className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 suggestion-item ${
-            index === activeSuggestionIndex ? 'bg-gray-100' : ''
-          }`}
+          className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 suggestion-item ${index === activeSuggestionIndex ? 'bg-gray-100' : ''
+            }`}
           role="option"
           aria-selected={index === activeSuggestionIndex}
           onClick={(e) => {
