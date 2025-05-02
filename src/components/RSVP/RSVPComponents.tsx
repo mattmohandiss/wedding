@@ -50,7 +50,7 @@ export interface StageIndicatorProps {
 export const StageIndicator: React.FC<StageIndicatorProps> = ({
   currentStage
 }) => {
-  const stages: FormStage[] = ['nameSelection', 'messageSubmission'];
+  const stages: FormStage[] = ['nameSelection', 'detailsSubmission'];
   
   return (
     <div className="flex justify-center mb-4">

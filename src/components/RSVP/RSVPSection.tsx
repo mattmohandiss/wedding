@@ -15,7 +15,7 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
   const [nameInput, setNameInput] = useState('');
   const [selectedGuest, setSelectedGuest] = useState<GuestData | null>(null);
 
-  // Message submission state
+  // Details submission state
   const [message, setMessage] = useState('');
   const [partyMembers, setPartyMembers] = useState<PartyMemberAttendance[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,8 +96,9 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     setNameInput(guest.fullName);
   };
 
-  // Handle proceeding to message stage
-  const handleProceedToMessage = () => {
+  // Handle proceeding to details stage
+  const handleProceedToDetails = () => {
+    console.log('iNPUT: ', nameInput)
     if (nameInput.trim() === '') {
       setErrorMessage('Please enter your name');
       return;
@@ -111,6 +112,7 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
 
     if (exactMatch) {
       // If we found an exact match, use that guest (even if they didn't use the dropdown)
+      console.log('Found match for: ', exactMatch.fullName)
       setSelectedGuest(exactMatch);
     } else if (!selectedGuest) {
       // If no exact match found and no guest selected from dropdown
@@ -119,19 +121,23 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     }
 
     // Set up party members list for attendance tracking
-    if (selectedGuest) {
+    // Use exactMatch if it exists, otherwise fall back to selectedGuest
+    const guestToUse = exactMatch || selectedGuest;
+    
+    if (guestToUse) {
       // If this guest has a party, find all party members
-      if (selectedGuest.party && selectedGuest.party !== 'Unknown') {
+      if (guestToUse.party && guestToUse.party !== 'Unknown') {
         // Find all guests with the same party name
         const partyGuests = guests.filter(
-          (guest) => guest.party === selectedGuest.party
+          (guest) => guest.party === guestToUse.party
         );
         
         // Create attendance objects for each party member
         const partyAttendees = partyGuests.map((guest) => ({
           name: guest.fullName,
           isAttending: true, // Default to attending
-          id: guest.id
+          id: guest.id,
+          dietaryRestrictions: ''
         }));
         
         setPartyMembers(partyAttendees);
@@ -139,16 +145,17 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
         // If no party or unknown party, just add the selected guest
         setPartyMembers([
           {
-            name: selectedGuest.fullName,
+            name: guestToUse.fullName,
             isAttending: true,
-            id: selectedGuest.id
+            id: guestToUse.id,
+            dietaryRestrictions: ''
           }
         ]);
       }
     }
 
     setErrorMessage('');
-    setFormStage('messageSubmission');
+    setFormStage('detailsSubmission');
   };
 
   // Handle going back to name selection
@@ -162,11 +169,14 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // At this point, selectedGuest should be set, but we'll check to be safe
     if (!selectedGuest) {
       setErrorMessage('Please enter your name');
       return;
     }
 
+    // We've already populated partyMembers using the correct guest information
+    // so we just need to use the selectedGuest for the partyName
     const rsvpData: RsvpData = {
       partyName: selectedGuest.party || selectedGuest.fullName,
       attendees: partyMembers,
@@ -210,7 +220,7 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
       <div>
         <button
           type="button"
-          onClick={handleProceedToMessage}
+          onClick={handleProceedToDetails}
           disabled={isSubmitting || isLoading}
           className="px-6 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors disabled:opacity-50"
         >
@@ -230,8 +240,18 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     setPartyMembers(updatedMembers);
   };
 
-  // Render Message Submission Stage
-  const renderMessageSubmissionStage = () => {
+  // Handle updating dietary restrictions for a party member
+  const handleDietaryRestrictionsChange = (index: number, value: string) => {
+    const updatedMembers = [...partyMembers];
+    updatedMembers[index] = {
+      ...updatedMembers[index],
+      dietaryRestrictions: value
+    };
+    setPartyMembers(updatedMembers);
+  };
+
+  // Render Details Submission Stage
+  const renderDetailsSubmissionStage = () => {
     if (!selectedGuest) return null;
 
     return (
@@ -250,15 +270,31 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
           <div className="space-y-4 mt-3">
             <p className="text-sm font-medium text-gray-700">Please confirm who will be attending:</p>
             {partyMembers.map((member, index) => (
-              <div key={index} className="flex items-center justify-between bg-white p-3 rounded border border-gray-100">
-                <span className="text-gray-800">{member.name}</span>
-                <Toggle
-                  isOn={member.isAttending}
-                  onChange={(newValue) => handleAttendanceToggle(index, newValue)}
-                  labelOn="Attending"
-                  labelOff="Not Attending"
-                  disabled={isSubmitting}
-                />
+              <div key={index} className="bg-white p-3 rounded border border-gray-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-800">{member.name}</span>
+                  <Toggle
+                    isOn={member.isAttending}
+                    onChange={(newValue) => handleAttendanceToggle(index, newValue)}
+                    labelOn="Attending"
+                    labelOff="Not Attending"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                
+                {member.isAttending && (
+                  <div>
+                    <input
+                      id={`dietary-${index}`}
+                      type="text"
+                      value={member.dietaryRestrictions}
+                      onChange={(e) => handleDietaryRestrictionsChange(index, e.target.value)}
+                      placeholder="Dietary Restrictions"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-200"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -324,7 +360,7 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
             {/* Form Stages */}
             {formStage === 'nameSelection' ?
               renderNameSelectionStage() :
-              renderMessageSubmissionStage()
+              renderDetailsSubmissionStage()
             }
           </div>
         )}

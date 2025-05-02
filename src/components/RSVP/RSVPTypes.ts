@@ -14,6 +14,7 @@ export interface PartyMemberAttendance {
   name: string;
   isAttending: boolean;
   id: number;
+  dietaryRestrictions?: string;
 }
 
 export interface RsvpData {
@@ -22,4 +23,4 @@ export interface RsvpData {
   message: string;
 }
 
-export type FormStage = 'nameSelection' | 'messageSubmission';
+export type FormStage = 'nameSelection' | 'detailsSubmission';

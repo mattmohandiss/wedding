@@ -5,6 +5,7 @@ interface PartyMemberAttendance {
   name: string;
   isAttending: boolean;
   id: number;
+  dietaryRestrictions?: string;
 }
 
 interface RSVPFormData {
@@ -94,15 +95,26 @@ async function processRSVPData(env: Env, data: RSVPFormData) {
       const row = attendee.id;
       
       // Column L is the 12th column (for attendance status)
-      const range = `Guests!L${row}`;
+      const attendanceRange = `Guests!L${row}`;
       
       // Set value to "yes" or "no" based on attendance
-      const value = attendee.isAttending ? "yes" : "no";
+      const attendanceValue = attendee.isAttending ? "Yes" : "No";
       
-      console.log(`Updating ${attendee.name} (row ${row}): attendance = ${value}`);
+      console.log(`Updating ${attendee.name} (row ${row}): attendance = ${attendanceValue}`);
       
-      // Make the API request to update the cell
-      await updateSheetCell(env, token, range, value);
+      // Make the API request to update the attendance cell
+      await updateSheetCell(env, token, attendanceRange, attendanceValue);
+      
+      // Update dietary restrictions in column M if provided
+      if (attendee.dietaryRestrictions) {
+        // Column M is the 13th column (for dietary restrictions)
+        const dietaryRange = `Guests!M${row}`;
+        
+        console.log(`Updating ${attendee.name} (row ${row}): dietary restrictions = "${attendee.dietaryRestrictions}"`);
+        
+        // Make the API request to update the dietary restrictions cell
+        await updateSheetCell(env, token, dietaryRange, attendee.dietaryRestrictions);
+      }
     }
     
     console.log("RSVP update completed successfully");
