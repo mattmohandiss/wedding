@@ -13,11 +13,11 @@ export const WeddingPartySection = ({ isActive }: WeddingPartySectionProps) => {
         WEDDING PARTY
       </h2>
       
-      <div className="flex flex-wrap justify-center gap-10">
-        {/* Groom's Side */}
-        <div className="flex-1 min-w-[300px] mb-8">
+      <div className="flex flex-col items-center gap-12">
+        {/* Groomsmen Row */}
+        <div className="w-full">
           <h3 className="mb-6 text-2xl font-['Cormorant_Garamond']">GROOMSMEN</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 justify-items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-8 justify-items-center">
             <PartyMember 
               name="Ben" 
               image="assets/Ben.jpeg" 
@@ -46,10 +46,10 @@ export const WeddingPartySection = ({ isActive }: WeddingPartySectionProps) => {
           </div>
         </div>
         
-        {/* Bride's Side */}
-        <div className="flex-1 min-w-[300px] mb-8">
+        {/* Bridesmaids Row */}
+        <div className="w-full">
           <h3 className="mb-6 text-2xl font-['Cormorant_Garamond']">BRIDESMAIDS</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 justify-items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8 justify-items-center">
             <PartyMember 
               name="Sarah" 
               image="assets/Sarah.jpeg" 
@@ -70,10 +70,6 @@ export const WeddingPartySection = ({ isActive }: WeddingPartySectionProps) => {
             <PartyMember 
               name="Makayla" 
               image="assets/Makayla.jpeg" 
-            />
-            <PartyMember 
-              name="Charlotte" 
-              image="assets/Charlotte.jpeg" 
             />
           </div>
         </div>

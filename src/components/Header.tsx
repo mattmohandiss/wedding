@@ -69,11 +69,11 @@ export const Header = ({ activeSection, onSectionChange }: HeaderProps) => {
           </li>
           <li className="mx-4">
             <a 
-              href="#travel" 
-              onClick={(e) => handleNavClick(e, 'travel')}
-              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'travel' ? 'after:w-full' : ''}`}
+              href="#accommodations" 
+              onClick={(e) => handleNavClick(e, 'accommodations')}
+              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'accommodations' ? 'after:w-full' : ''}`}
             >
-              Travel
+              Accommodations
             </a>
           </li>
           <li className="mx-4">

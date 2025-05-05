@@ -6,7 +6,7 @@ import EventSection from './components/EventSection';
 import PhotosSection from './components/PhotosSection';
 import WeddingPartySection from './components/WeddingPartySection';
 import QAndASection from './components/QAndASection';
-import TravelSection from './components/TravelSection';
+import AccommodationsSection from "./components/AccommodationsSection";
 import ThingsToDoSection from './components/ThingsToDoSection';
 import RSVPSection from './components/RSVP/RSVPSection';
 import Footer from './components/Footer';
@@ -46,7 +46,7 @@ export function App() {
       <PhotosSection isActive={activeSection === 'photos'} />
       <WeddingPartySection isActive={activeSection === 'wedding-party'} />
       <QAndASection isActive={activeSection === 'q-and-a'} />
-      <TravelSection isActive={activeSection === 'travel'} />
+      <AccommodationsSection isActive={activeSection === 'accommodations'} />
       <ThingsToDoSection isActive={activeSection === 'things-to-do'} />
       <RSVPSection isActive={activeSection === 'rsvp'} />
       
