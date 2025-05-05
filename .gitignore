@@ -5,9 +5,9 @@ node_modules
 .wrangler
 dist
 
-# environment variables
+# secrets
 .dev.vars
-google.json
 
 # Editor
 .vscode
+.clinerules

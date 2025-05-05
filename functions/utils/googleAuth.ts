@@ -1,18 +1,20 @@
 import { SignJWT, importPKCS8 } from 'jose';
-import serviceAccount from 'google.json';
+import type { Env } from '../types';
 
 // Service account configuration
-const SERVICE_ACCOUNT = {
-  client_email: serviceAccount.client_email,
-  private_key: serviceAccount.private_key.replace(/\\n/g, '\n'),
-};
+let SERVICE_ACCOUNT: { client_email: string; private_key: string };
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const TOKEN_URI = 'https://oauth2.googleapis.com/token';
 
 /**
  * Creates a signed JWT using the service account
  */
-async function mintJWT(): Promise<string> {
+async function mintJWT(env: Env): Promise<string> {
+  // Initialize service account with environment variables
+  SERVICE_ACCOUNT = {
+    client_email: env.GOOGLE_EMAIL,
+    private_key: env.GOOGLE_KEY.replace(/\\n/g, '\n'),
+  };
   const iat = Math.floor(Date.now() / 1000);
   
   // Import the private key in PKCS8 format for RS256
@@ -32,8 +34,8 @@ async function mintJWT(): Promise<string> {
 /**
  * Exchanges a JWT for a Google OAuth access token
  */
-export async function getAccessToken(): Promise<string> {
-  const assertion = await mintJWT();
+export async function getAccessToken(env: Env): Promise<string> {
+  const assertion = await mintJWT(env);
   const resp = await fetch(TOKEN_URI, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

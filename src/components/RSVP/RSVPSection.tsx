@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RSVPSectionProps, GuestData, FormStage, RsvpData, PartyMemberAttendance } from './RSVPTypes';
+import { GuestData, FormStage, RsvpData, PartyMemberAttendance } from '@data';
 import { Toggle, StageIndicator, DropdownInput } from './RSVPComponents';
+
+export interface RSVPSectionProps {
+  isActive: boolean;
+}
 
 export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
   // Form stage state

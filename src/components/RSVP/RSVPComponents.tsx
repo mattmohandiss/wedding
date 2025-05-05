@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GuestData, FormStage } from './RSVPTypes';
+import { GuestData, FormStage } from '@data';
 
 // Toggle component
 export interface ToggleProps {

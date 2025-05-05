@@ -1,18 +1,6 @@
 import type { Env } from '../types';
 import { getAccessToken, getCorsHeaders } from '../utils/googleAuth';
-
-interface PartyMemberAttendance {
-  name: string;
-  isAttending: boolean;
-  id: number;
-  dietaryRestrictions?: string;
-}
-
-interface RSVPFormData {
-  partyName: string;
-  attendees: PartyMemberAttendance[];
-  message?: string;
-}
+import { PartyMemberAttendance, RsvpData } from '@data';
 
 export const onRequestPost = async (context: any) => {
   const { request, env } = context;
@@ -22,7 +10,7 @@ export const onRequestPost = async (context: any) => {
   
   try {
     // Parse the request body
-    const data: RSVPFormData = await request.json();
+    const data: RsvpData = await request.json();
     
     // Validate required fields
     if (!data.partyName || !data.attendees || data.attendees.length === 0) {
@@ -76,12 +64,12 @@ export const onRequestOptions = async () => {
 };
 
 // Process RSVP data and update the sheet
-async function processRSVPData(env: Env, data: RSVPFormData) {
+async function processRSVPData(env: Env, data: RsvpData) {
   try {
     console.log("Processing RSVP data for party:", data.partyName);
     
     // Get access token for Google Sheets API
-    const token = await getAccessToken();
+    const token = await getAccessToken(env);
     
     // Update each attendee's status in the sheet
     for (const attendee of data.attendees) {

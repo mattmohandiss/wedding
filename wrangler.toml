@@ -2,3 +2,13 @@ name = "wedding"
 compatibility_date = "2025-04-28"
 pages_build_output_dir = "dist"
 
+[assets]
+directory = "dist"
+
+[dev]
+port = 8787
+local_protocol = "http"
+
+[build]
+command = "bun run build"
+watch_dir = ["src", "functions", "public"]

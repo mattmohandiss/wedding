@@ -1,13 +1,6 @@
-import type { Env } from '../types';
+import { Env } from '../types';
 import { getAccessToken, getCorsHeaders } from '../utils/googleAuth';
-
-interface GuestData {
-  id: number;
-  firstName: string;
-  lastName: string;
-  party: string;
-  fullName: string;
-}
+import { GuestData } from '@data';
 
 // Parse sheet data into guest objects
 function parseGuests(sheetData: any): GuestData[] {
@@ -44,14 +37,14 @@ function parseGuests(sheetData: any): GuestData[] {
 }
 
 export const onRequestGet = async (context: any) => {
-  const { env } = context;
+  const env = context.env as Env;
   
   // Set CORS headers
   const headers = getCorsHeaders('GET, OPTIONS');
   
   try {
     // Get access token
-    const token = await getAccessToken();
+    const token = await getAccessToken(env);
     
     // Fetch guest data from sheet
     const range = "Guests!A1:C151"
