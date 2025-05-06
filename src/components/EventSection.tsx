@@ -1,4 +1,4 @@
-import { getMapUrl } from '../utils/mapLinks';
+import { Place } from './Place';
 
 interface EventSectionProps {
   id: string;
@@ -14,13 +14,10 @@ export const EventSection = ({
   title, 
   date, 
   venue, 
-  address, 
+  address,
   isActive 
 }: EventSectionProps) => {
   if (!isActive) return null;
-  
-  // Generate map link for the address
-  const mapUrl = getMapUrl(address);
   
   return (
     <section id={id} className="text-center my-20">
@@ -30,18 +27,11 @@ export const EventSection = ({
       <p className="text-base tracking-wide mb-5">
         {date}
       </p>
-      <p className="font-medium mb-1 text-lg">
-        {venue}
-      </p>
       <p className="text-sm text-gray-600">
-        <a 
-          href={mapUrl}
-          className="text-gray-600 no-underline border-b border-dotted border-gray-600 hover:text-gray-800 hover:border-gray-800"
-          target="_blank"
-          rel="noreferrer"
-        >
-          {address}
-        </a>
+        <Place
+          name={venue}
+          address={address}
+        />
       </p>
     </section>
   );

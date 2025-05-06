@@ -1,10 +1,10 @@
-import { getMapUrl } from '../utils/mapLinks';
+import { Place } from './Place';
 
 interface Accommodation {
   name: string;
-  description?: string;
   address: string;
   phone: string;
+  url: string;
 }
 
 interface AccommodationsSectionProps {
@@ -17,15 +17,15 @@ export const AccommodationsSection = ({ isActive }: AccommodationsSectionProps) 
   const accommodations: Accommodation[] = [
     {
       name: "21c Museum Hotel Durham",
-      description: "Mohandiss/Davis Wedding Block",
       address: "111 North Corcoran St., Durham, NC 27701",
-      phone: "919.956.6700"
+      phone: "919.956.6700",
+      url: "https://book.passkey.com/e/51038427"
     },
     {
       name: "Hilton Garden Inn",
-      description: "Durham/University Medical Center",
       address: "2102 West Main St., Durham, NC 27705",
-      phone: "919.286.0774"
+      phone: "919.286.0774",
+      url: "https://www.hilton.com/en/attend-my-event/mohandiss-davis-2025/"
     }
   ];
   
@@ -41,28 +41,24 @@ export const AccommodationsSection = ({ isActive }: AccommodationsSectionProps) 
             key={index} 
             className="max-w-[700px] mx-auto mb-10 text-center border-b border-gray-100 pb-8 last:border-0"
           >
-            <h3 className="mb-2 text-xl font-['Cormorant_Garamond']">
-              {accommodation.name}
-            </h3>
-            {accommodation.description && (
-              <p className="text-sm mb-2 text-gray-700">{accommodation.description}</p>
-            )}
-            <p className="text-sm mb-2">
+            <Place
+              name={accommodation.name}
+              address={accommodation.address}
+            />
+            <p className="text-sm mt-2">
               <a 
-                href={getMapUrl(accommodation.address)}
-                className="text-gray-600 no-underline border-b border-dotted border-gray-600 hover:text-gray-800 hover:border-gray-800"
+                href={accommodation.url}
+                className="text-gray-600 no-underline border-b border-dotted border-gray-600 hover:text-gray-800 hover:border-gray-800 mr-4"
                 target="_blank"
                 rel="noreferrer"
               >
-                {accommodation.address}
+                🌐 Book a Room
               </a>
-            </p>
-            <p className="text-sm text-gray-700">
               <a 
                 href={`tel:${accommodation.phone.replace(/[^0-9]/g, '')}`}
                 className="text-gray-600 no-underline border-b border-dotted border-gray-600 hover:text-gray-800 hover:border-gray-800"
               >
-                {accommodation.phone}
+                📞 {accommodation.phone}
               </a>
             </p>
           </div>
