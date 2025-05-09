@@ -3,33 +3,29 @@
  */
 
 /**
- * Represents a guest's basic information.
+ * Information about a guest's location in the spreadsheet
+ */
+export interface GuestPosition {
+  row: number;       // The row number in the sheet
+  columnMap: Record<string, number>;  // Maps field names to column indices
+}
+
+/**
+ * Represents a guest's complete information.
  */
 export interface GuestData {
-  id: number;
+  id: GuestPosition;  // Changed from number to GuestPosition
   firstName: string;
   lastName: string;
   party: string;
   fullName: string;
-}
-
-/**
- * Represents a party member's attendance status and dietary restrictions.
- */
-export interface PartyMemberAttendance {
-  name: string;
-  isAttending: boolean;
-  id: number;
-  dietaryRestrictions?: string;
-}
-
-/**
- * Represents the complete RSVP submission data for a party.
- */
-export interface RsvpData {
-  partyName: string;
-  attendees: PartyMemberAttendance[];
-  message?: string;
+  phone: string;
+  email: string;
+  address: string;
+  rehearsalRsvp: string;
+  ceremonyRsvp: string;
+  receptionRsvp: string;
+  dietaryRestrictions: string;
 }
 
 /**

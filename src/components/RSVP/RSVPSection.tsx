@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { GuestData, FormStage, RsvpData, PartyMemberAttendance } from '@data';
+import React, { useState, useEffect } from 'react';
+import { GuestData, FormStage } from '@data';
 import { Toggle, StageIndicator, DropdownInput } from './RSVPComponents';
 
 export interface RSVPSectionProps {
@@ -21,10 +21,21 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
 
   // Details submission state
   const [message, setMessage] = useState('');
-  const [partyMembers, setPartyMembers] = useState<PartyMemberAttendance[]>([]);
+  const [partyGuests, setPartyGuests] = useState<GuestData[]>([]);
+  // Track RSVP state separately to avoid modifying original guest data until submission
+  const [guestAttendance, setGuestAttendance] = useState<Record<string, {
+    rehearsal: boolean,
+    ceremony: boolean,
+    reception: boolean,
+    dietaryRestrictions: string
+  }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Helper to get a unique string ID for each guest (for use as keys or in records)
+  const getGuestKey = (guest: GuestData): string => {
+    return `guest-${guest.id.row}`;
+  };
 
   // Fetch guest data when component becomes active
   useEffect(() => {
@@ -32,7 +43,6 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
       fetchGuests();
     }
   }, [isActive]);
-
 
   // Simplified API functions
   async function fetchGuests() {
@@ -61,7 +71,7 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     }
   }
 
-  async function submitRSVP(rsvpData: RsvpData) {
+  async function submitRSVP(guests: GuestData[], message: string) {
     setIsSubmitting(true);
     setErrorMessage('');
 
@@ -71,7 +81,10 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(rsvpData),
+        body: JSON.stringify({
+          guests,
+          message
+        }),
       });
 
       if (!response.ok) {
@@ -102,7 +115,6 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
 
   // Handle proceeding to details stage
   const handleProceedToDetails = () => {
-    console.log('iNPUT: ', nameInput)
     if (nameInput.trim() === '') {
       setErrorMessage('Please enter your name');
       return;
@@ -111,12 +123,12 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     // First check if there's an exact match in the guests list, regardless of whether
     // a guest has already been selected through the dropdown
     const exactMatch = guests.find(
-      (guest: GuestData) => guest.fullName.toLowerCase() === nameInput.trim().toLowerCase()
+      (guest) => guest.fullName.toLowerCase() === nameInput.trim().toLowerCase()
     );
 
     if (exactMatch) {
-      // If we found an exact match, use that guest (even if they didn't use the dropdown)
-      console.log('Found match for: ', exactMatch.fullName)
+      // If we found an exact match, use that guest
+      console.log('Found match for: ', exactMatch.fullName);
       setSelectedGuest(exactMatch);
     } else if (!selectedGuest) {
       // If no exact match found and no guest selected from dropdown
@@ -124,38 +136,44 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
       return;
     }
 
-    // Set up party members list for attendance tracking
-    // Use exactMatch if it exists, otherwise fall back to selectedGuest
+    // Set up party guests list for RSVP tracking
     const guestToUse = exactMatch || selectedGuest;
     
     if (guestToUse) {
+      let partyGuestsList: GuestData[] = [];
+      
       // If this guest has a party, find all party members
       if (guestToUse.party && guestToUse.party !== 'Unknown') {
         // Find all guests with the same party name
-        const partyGuests = guests.filter(
+        partyGuestsList = guests.filter(
           (guest) => guest.party === guestToUse.party
         );
-        
-        // Create attendance objects for each party member
-        const partyAttendees = partyGuests.map((guest) => ({
-          name: guest.fullName,
-          isAttending: true, // Default to attending
-          id: guest.id,
-          dietaryRestrictions: ''
-        }));
-        
-        setPartyMembers(partyAttendees);
       } else {
         // If no party or unknown party, just add the selected guest
-        setPartyMembers([
-          {
-            name: guestToUse.fullName,
-            isAttending: true,
-            id: guestToUse.id,
-            dietaryRestrictions: ''
-          }
-        ]);
+        partyGuestsList = [guestToUse];
       }
+      
+      // Set the party guests
+      setPartyGuests(partyGuestsList);
+      
+      // Initialize attendance state for each guest in the party
+      const initialAttendance: Record<string, {
+        rehearsal: boolean,
+        ceremony: boolean,
+        reception: boolean,
+        dietaryRestrictions: string
+      }> = {};
+      
+      partyGuestsList.forEach(guest => {
+        initialAttendance[getGuestKey(guest)] = {
+          rehearsal: guest.rehearsalRsvp !== "N/A",  // Default to true if applicable
+          ceremony: guest.ceremonyRsvp !== "N/A",    // Default to true if applicable
+          reception: guest.receptionRsvp !== "N/A",  // Default to true if applicable
+          dietaryRestrictions: guest.dietaryRestrictions || ''
+        };
+      });
+      
+      setGuestAttendance(initialAttendance);
     }
 
     setErrorMessage('');
@@ -167,6 +185,8 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     setFormStage('nameSelection');
     setSelectedGuest(null);
     setNameInput('');
+    setPartyGuests([]);
+    setGuestAttendance({});
   };
 
   // Handle form submission
@@ -174,20 +194,74 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     e.preventDefault();
 
     // At this point, selectedGuest should be set, but we'll check to be safe
-    if (!selectedGuest) {
+    if (!selectedGuest || partyGuests.length === 0) {
       setErrorMessage('Please enter your name');
       return;
     }
 
-    // We've already populated partyMembers using the correct guest information
-    // so we just need to use the selectedGuest for the partyName
-    const rsvpData: RsvpData = {
-      partyName: selectedGuest.party || selectedGuest.fullName,
-      attendees: partyMembers,
-      message: message.trim()
-    };
+    // Map back the attendance states to GuestData objects for submission
+    const updatedGuests = partyGuests.map(guest => {
+      const guestKey = getGuestKey(guest);
+      const attendance = guestAttendance[guestKey];
+      
+      // Create updated guest with attendance states
+      return {
+        ...guest,
+        rehearsalRsvp: guest.rehearsalRsvp === "N/A" ? "N/A" : (attendance?.rehearsal ? "Yes" : "No"),
+        ceremonyRsvp: guest.ceremonyRsvp === "N/A" ? "N/A" : (attendance?.ceremony ? "Yes" : "No"),
+        receptionRsvp: guest.receptionRsvp === "N/A" ? "N/A" : (attendance?.reception ? "Yes" : "No"),
+        dietaryRestrictions: attendance?.dietaryRestrictions || ''
+      };
+    });
 
-    await submitRSVP(rsvpData);
+    // Send the updated guests and message
+    await submitRSVP(updatedGuests, message.trim());
+  };
+
+  // Handlers for toggle updates
+  const handleRehearsalToggle = (guest: GuestData, newValue: boolean) => {
+    const guestKey = getGuestKey(guest);
+    setGuestAttendance(prev => ({
+      ...prev,
+      [guestKey]: {
+        ...prev[guestKey],
+        rehearsal: newValue
+      }
+    }));
+  };
+
+  const handleCeremonyToggle = (guest: GuestData, newValue: boolean) => {
+    const guestKey = getGuestKey(guest);
+    setGuestAttendance(prev => ({
+      ...prev,
+      [guestKey]: {
+        ...prev[guestKey],
+        ceremony: newValue
+      }
+    }));
+  };
+
+  const handleReceptionToggle = (guest: GuestData, newValue: boolean) => {
+    const guestKey = getGuestKey(guest);
+    setGuestAttendance(prev => ({
+      ...prev,
+      [guestKey]: {
+        ...prev[guestKey],
+        reception: newValue
+      }
+    }));
+  };
+
+  // Handle updating dietary restrictions
+  const handleDietaryRestrictionsChange = (guest: GuestData, value: string) => {
+    const guestKey = getGuestKey(guest);
+    setGuestAttendance(prev => ({
+      ...prev,
+      [guestKey]: {
+        ...prev[guestKey],
+        dietaryRestrictions: value
+      }
+    }));
   };
 
   // Reset form to initial state
@@ -195,7 +269,8 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     setNameInput('');
     setMessage('');
     setSelectedGuest(null);
-    setPartyMembers([]);
+    setPartyGuests([]);
+    setGuestAttendance({});
     setFormStage('nameSelection');
   };
 
@@ -217,7 +292,6 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
           placeholder="Your Name"
           disabled={isSubmitting || isLoading}
         />
-        
       </div>
 
       {/* Next Button */}
@@ -234,26 +308,6 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
     </div>
   );
 
-  // Handle toggling attendance for a party member
-  const handleAttendanceToggle = (index: number, newValue: boolean) => {
-    const updatedMembers = [...partyMembers];
-    updatedMembers[index] = {
-      ...updatedMembers[index],
-      isAttending: newValue
-    };
-    setPartyMembers(updatedMembers);
-  };
-
-  // Handle updating dietary restrictions for a party member
-  const handleDietaryRestrictionsChange = (index: number, value: string) => {
-    const updatedMembers = [...partyMembers];
-    updatedMembers[index] = {
-      ...updatedMembers[index],
-      dietaryRestrictions: value
-    };
-    setPartyMembers(updatedMembers);
-  };
-
   // Render Details Submission Stage
   const renderDetailsSubmissionStage = () => {
     if (!selectedGuest) return null;
@@ -264,44 +318,73 @@ export const RSVPSection: React.FC<RSVPSectionProps> = ({ isActive }) => {
 
         {/* Display Party Information */}
         <div className="bg-gray-50 p-4 rounded border border-gray-200">
-          {/* {selectedGuest.party && selectedGuest.party !== 'Unknown' && (
-            <p className="text-sm text-gray-600 mb-2">
-              Party: {selectedGuest.party}
-            </p>
-          )} */}
-          
-          {/* List each party member with individual toggles */}
+          {/* List each party member with individual toggles for each event */}
           <div className="space-y-4 mt-3">
-            <p className="text-sm font-medium text-gray-700">Please confirm who will be attending:</p>
-            {partyMembers.map((member, index) => (
-              <div key={index} className="bg-white p-3 rounded border border-gray-100 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-800">{member.name}</span>
-                  <div className="flex items-center">
-                    <span className="mr-2 text-sm text-gray-700">Attending:</span>
-                    <Toggle
-                      isOn={member.isAttending}
-                      onChange={(newValue) => handleAttendanceToggle(index, newValue)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
+            <p className="text-sm font-medium text-gray-700">Please confirm attendance for each event:</p>
+            {partyGuests.map((guest) => {
+              const guestKey = getGuestKey(guest);
+              return (
+                <div key={guestKey} className="bg-white p-3 rounded border border-gray-100 space-y-3">
+                  <div className="font-medium text-gray-800 mb-2">{guest.fullName}</div>
+                  
+                  {/* Only show Rehearsal Toggle if applicable */}
+                  {guest.rehearsalRsvp !== "N/A" && (
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-700">Rehearsal Dinner:</span>
+                      <Toggle
+                        isOn={guestAttendance[guestKey]?.rehearsal || false}
+                        onChange={(newValue) => handleRehearsalToggle(guest, newValue)}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Only show Ceremony Toggle if applicable */}
+                  {guest.ceremonyRsvp !== "N/A" && (
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-700">Ceremony:</span>
+                      <Toggle
+                        isOn={guestAttendance[guestKey]?.ceremony || false}
+                        onChange={(newValue) => handleCeremonyToggle(guest, newValue)}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Only show Reception Toggle if applicable */}
+                  {guest.receptionRsvp !== "N/A" && (
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-700">Reception:</span>
+                      <Toggle
+                        isOn={guestAttendance[guestKey]?.reception || false}
+                        onChange={(newValue) => handleReceptionToggle(guest, newValue)}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Show dietary restrictions if attending any event */}
+                  {((guest.rehearsalRsvp !== "N/A" && guestAttendance[guestKey]?.rehearsal) || 
+                    (guest.ceremonyRsvp !== "N/A" && guestAttendance[guestKey]?.ceremony) || 
+                    (guest.receptionRsvp !== "N/A" && guestAttendance[guestKey]?.reception)) && (
+                    <div className="mt-3">
+                      <label htmlFor={`dietary-${guestKey}`} className="block text-sm text-gray-700 mb-1">
+                        Dietary Restrictions:
+                      </label>
+                      <input
+                        id={`dietary-${guestKey}`}
+                        type="text"
+                        value={guestAttendance[guestKey]?.dietaryRestrictions || ''}
+                        onChange={(e) => handleDietaryRestrictionsChange(guest, e.target.value)}
+                        placeholder="Please specify any dietary restrictions"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-200"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
                 </div>
-                
-                {member.isAttending && (
-                  <div>
-                    <input
-                      id={`dietary-${index}`}
-                      type="text"
-                      value={member.dietaryRestrictions}
-                      onChange={(e) => handleDietaryRestrictionsChange(index, e.target.value)}
-                      placeholder="Dietary Restrictions"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-200"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

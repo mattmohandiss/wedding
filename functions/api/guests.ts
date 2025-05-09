@@ -8,29 +8,72 @@ function parseGuests(sheetData: any): GuestData[] {
     return [];
   }
   
-  // Assume first row is headers
+  // Extract headers and create column mapping
+  const headers = sheetData.values[0];
+  const columnMap: Record<string, number> = {};
+  
+  // Create a mapping of header names to column indices
+  headers.forEach((header: string, index: number) => {
+    columnMap[header.trim()] = index;
+  });
+  
   const guests: GuestData[] = [];
   
-  // Start from index 1 to skip header row
-  for (let i = 1; i < sheetData.values.length; i++) {
+  // Process each data row, excluding the last row which contains counts
+  for (let i = 1; i < sheetData.values.length - 1; i++) {
     const row = sheetData.values[i];
     
-    // Skip empty rows or rows without names
-    if (!row || row.length < 2 || !row[0] || !row[1]) {
+    // Skip empty rows or rows without first and last names
+    if (!row || 
+        columnMap['First Name'] === undefined || 
+        columnMap['Last Name'] === undefined ||
+        !row[columnMap['First Name']] || 
+        !row[columnMap['Last Name']]) {
       continue;
     }
     
-    const firstName = row[0].trim();
-    const lastName = row[1].trim();
-    const party = row[2] ? row[2].trim() : '';
+    const firstName = row[columnMap['First Name']]?.trim() || '';
+    const lastName = row[columnMap['Last Name']]?.trim() || '';
     
-    guests.push({
-      id: i+1, //account for 1-indexing in Google sheets
+    // Initialize guest with all required fields and default empty values
+    const guest: GuestData = {
+      id: {
+        row: i + 1,  // Adjust to get actual sheet row number (accounting for header row)
+        columnMap: {...columnMap}  // Clone the column map for each guest
+      },
       firstName,
       lastName,
-      party,
-      fullName: `${firstName} ${lastName}`
-    });
+      fullName: `${firstName} ${lastName}`,
+      party: '',
+      phone: '',
+      email: '',
+      address: '',
+      rehearsalRsvp: '',
+      ceremonyRsvp: '',
+      receptionRsvp: '',
+      dietaryRestrictions: ''
+    };
+    
+    // Helper function to get cell value with default empty string
+    const getCellValue = (headerName: string): string => {
+      const columnIndex = columnMap[headerName];
+      if (columnIndex !== undefined && row[columnIndex]) {
+        return row[columnIndex].trim();
+      }
+      return '';
+    };
+    
+    // Set each field individually in a type-safe way
+    guest.party = getCellValue('Party');
+    guest.phone = getCellValue('Phone');
+    guest.email = getCellValue('Email');
+    guest.address = getCellValue('Address');
+    guest.rehearsalRsvp = getCellValue('Rehearsal Dinner - RSVP');
+    guest.ceremonyRsvp = getCellValue('Ceremony - RSVP');
+    guest.receptionRsvp = getCellValue('Reception - RSVP');
+    guest.dietaryRestrictions = getCellValue('Dietary Restrictions');
+    
+    guests.push(guest);
   }
   
   return guests;
@@ -46,8 +89,8 @@ export const onRequestGet = async (context: any) => {
     // Get access token
     const token = await getAccessToken(env);
     
-    // Fetch guest data from sheet
-    const range = "Guests!A1:C151"
+    // Fetch entire guest sheet
+    const range = "Guests"; // Get the entire sheet
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${env.GOOGLE_SHEET_ID}/values/${encodeURIComponent(range)}`;
     const resp = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },

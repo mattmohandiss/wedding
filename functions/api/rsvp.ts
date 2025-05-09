@@ -1,43 +1,23 @@
 import type { Env } from '../types';
 import { getAccessToken, getCorsHeaders } from '../utils/googleAuth';
-import { PartyMemberAttendance, RsvpData } from '@data';
+import { GuestData } from '@data';
 
-export const onRequestPost = async (context: any) => {
-  const { request, env } = context;
-  
-  // Set CORS headers
+export const onRequestPost = async ({ request, env }: { request: Request, env: Env }) => {
   const headers = getCorsHeaders('POST, OPTIONS');
   
   try {
-    // Parse the request body
-    const data: RsvpData = await request.json();
+    // Parse and validate request body
+    const { guests, message = '' } = await request.json();
     
-    // Validate required fields
-    if (!data.partyName || !data.attendees || data.attendees.length === 0) {
+    if (!guests?.length) {
       return new Response(
-        JSON.stringify({ success: false, message: "Party name and attendees are required" }),
+        JSON.stringify({ success: false, message: "At least one guest is required" }),
         { status: 400, headers }
       );
     }
     
-    // Prepare data for Google Sheets - one row per attendee with party info
-    const timestamp = new Date().toISOString();
-    const rows = [];
-    
-    // Create a row for each attendee
-    for (const attendee of data.attendees) {
-      const row = [
-        attendee.name,
-        attendee.isAttending ? "Attending" : "Not Attending",
-        data.message || "", // Include message if provided, otherwise empty string
-        data.partyName, // Add party name
-        timestamp
-      ];
-      rows.push(row);
-    }
-    
-    // Process the RSVP data
-    await processRSVPData(env, data);
+    // Update guests in the sheet
+    await updateGuestsInSheet(env, guests, message);
     
     return new Response(
       JSON.stringify({ success: true, message: "RSVP successfully submitted" }),
@@ -45,11 +25,10 @@ export const onRequestPost = async (context: any) => {
     );
   } catch (error) {
     console.error("Error processing RSVP:", error);
-    
     return new Response(
       JSON.stringify({ 
         success: false, 
-        message: "Failed to process RSVP. Please try again later." 
+        message: "Failed to process RSVP. Please contact Matt at mattmohandiss@gmail.com." 
       }),
       { status: 500, headers }
     );
@@ -63,81 +42,114 @@ export const onRequestOptions = async () => {
   });
 };
 
-// Process RSVP data and update the sheet
-async function processRSVPData(env: Env, data: RsvpData) {
-  try {
-    console.log("Processing RSVP data for party:", data.partyName);
-    
-    // Get access token for Google Sheets API
-    const token = await getAccessToken(env);
-    
-    // Update each attendee's status in the sheet
-    for (const attendee of data.attendees) {
-      // Skip entries with invalid IDs (like manually entered names with id = -1)
-      if (attendee.id <= 0) {
-        console.log(`Skipping update for manually entered guest: ${attendee.name}`);
-        continue;
-      }
-      
-      // Row is the guest's ID (already 1-indexed to account for header row)
-      const row = attendee.id;
-      
-      // Column L is the 12th column (for attendance status)
-      const attendanceRange = `Guests!L${row}`;
-      
-      // Set value to "yes" or "no" based on attendance
-      const attendanceValue = attendee.isAttending ? "Yes" : "No";
-      
-      console.log(`Updating ${attendee.name} (row ${row}): attendance = ${attendanceValue}`);
-      
-      // Make the API request to update the attendance cell
-      await updateSheetCell(env, token, attendanceRange, attendanceValue);
-      
-      // Update dietary restrictions in column M if provided
-      if (attendee.dietaryRestrictions) {
-        // Column M is the 13th column (for dietary restrictions)
-        const dietaryRange = `Guests!M${row}`;
-        
-        console.log(`Updating ${attendee.name} (row ${row}): dietary restrictions = "${attendee.dietaryRestrictions}"`);
-        
-        // Make the API request to update the dietary restrictions cell
-        await updateSheetCell(env, token, dietaryRange, attendee.dietaryRestrictions);
-      }
-    }
-    
+/**
+ * Update all guests in the Google Sheet
+ */
+async function updateGuestsInSheet(env: Env, guests: GuestData[], message: string) {
+  const token = await getAccessToken(env);
+  const validGuests = guests.filter(guest => guest.id.row > 0);
+  
+  if (!validGuests.length) {
+    console.log("No valid guests to update");
+    return;
+  }
+  
+  console.log(`Updating ${validGuests.length} guests`);
+  
+  // Prepare batch update data
+  const batchData = createBatchUpdateData(validGuests, message);
+  
+  // Send batch update
+  if (batchData.length) {
+    await sendBatchUpdate(env, token, batchData);
     console.log("RSVP update completed successfully");
-    return true;
-  } catch (error) {
-    console.error("Error processing RSVP data:", error);
-    throw error;
   }
 }
 
-// Helper function to update a single cell in the Google Sheet
-async function updateSheetCell(env: Env, token: string, range: string, value: string) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${env.GOOGLE_SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+/**
+ * Type for batch update entry
+ */
+interface BatchUpdateEntry {
+  range: string;
+  values: any[][];
+}
+
+/**
+ * Create batch update data for all guests
+ */
+function createBatchUpdateData(guests: GuestData[], message: string): BatchUpdateEntry[] {
+  const batchData: BatchUpdateEntry[] = [];
+  
+  guests.forEach(guest => {
+    const { row, columnMap } = guest.id;
+    
+    // Define all fields that should be updated
+    const fields = {
+      'First Name': guest.firstName,
+      'Last Name': guest.lastName,
+      'Party': guest.party,
+      'Phone': guest.phone,
+      'Email': guest.email,
+      'Address': guest.address,
+      'Rehearsal Dinner - RSVP': guest.rehearsalRsvp,
+      'Ceremony - RSVP': guest.ceremonyRsvp,
+      'Reception - RSVP': guest.receptionRsvp,
+      'Dietary Restrictions': guest.dietaryRestrictions,
+      'Message': message
+    };
+    
+    // Add each field that has a column mapping to the batch
+    Object.entries(fields).forEach(([fieldName, value]) => {
+      if (columnMap[fieldName] !== undefined) {
+        const columnLetter = getColumnLetter(columnMap[fieldName] + 1);
+        const range = `Guests!${columnLetter}${row}`;
+        
+        batchData.push({
+          range,
+          values: [[value]]
+        });
+      }
+    });
+  });
+  
+  return batchData;
+}
+
+/**
+ * Send batch update to Google Sheets API
+ */
+async function sendBatchUpdate(env: Env, token: string, data: BatchUpdateEntry[]) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${env.GOOGLE_SHEET_ID}/values:batchUpdate`;
   
   const response = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      values: [[value]]
+      valueInputOption: 'RAW',
+      data
     })
   });
   
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(`Failed to update sheet: ${JSON.stringify(errorData)}`);
+    const errorText = await response.text();
+    throw new Error(`Failed to update sheet: ${errorText}`);
   }
   
   return response.json();
 }
 
-// Legacy function - will be removed once sheet update is implemented
-async function addRowToSheet(env: Env, values: string[]) {
-  console.log("DEPRECATED - Legacy function called with values:", values);
-  return true;
+/**
+ * Convert column index to letter (A, B, C, etc.)
+ */
+function getColumnLetter(index: number): string {
+  let letter = '';
+  while (index > 0) {
+    const remainder = (index - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    index = Math.floor((index - 1) / 26);
+  }
+  return letter;
 }
