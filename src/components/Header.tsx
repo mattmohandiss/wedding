@@ -42,11 +42,11 @@ export const Header = ({ activeSection, onSectionChange }: HeaderProps) => {
           </li>
           <li className="mx-4">
             <a 
-              href="#photos" 
-              onClick={(e) => handleNavClick(e, 'photos')}
-              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'photos' ? 'after:w-full' : ''}`}
+              href="#our-story" 
+              onClick={(e) => handleNavClick(e, 'our-story')}
+              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'our-story' ? 'after:w-full' : ''}`}
             >
-              Photos
+              Our Story
             </a>
           </li>
           <li className="mx-4">
@@ -60,11 +60,11 @@ export const Header = ({ activeSection, onSectionChange }: HeaderProps) => {
           </li>
           <li className="mx-4">
             <a 
-              href="#q-and-a" 
-              onClick={(e) => handleNavClick(e, 'q-and-a')}
-              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'q-and-a' ? 'after:w-full' : ''}`}
+              href="#rsvp" 
+              onClick={(e) => handleNavClick(e, 'rsvp')}
+              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'rsvp' ? 'after:w-full' : ''}`}
             >
-              Q + A
+              RSVP
             </a>
           </li>
           <li className="mx-4">
@@ -78,6 +78,15 @@ export const Header = ({ activeSection, onSectionChange }: HeaderProps) => {
           </li>
           <li className="mx-4">
             <a 
+              href="#q-and-a" 
+              onClick={(e) => handleNavClick(e, 'q-and-a')}
+              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'q-and-a' ? 'after:w-full' : ''}`}
+            >
+              Q + A
+            </a>
+          </li>
+          <li className="mx-4">
+            <a 
               href="#things-to-do" 
               onClick={(e) => handleNavClick(e, 'things-to-do')}
               className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'things-to-do' ? 'after:w-full' : ''}`}
@@ -87,11 +96,11 @@ export const Header = ({ activeSection, onSectionChange }: HeaderProps) => {
           </li>
           <li className="mx-4">
             <a 
-              href="#rsvp" 
-              onClick={(e) => handleNavClick(e, 'rsvp')}
-              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'rsvp' ? 'after:w-full' : ''}`}
+              href="#registry" 
+              onClick={(e) => handleNavClick(e, 'registry')}
+              className={`text-sm tracking-wide px-0 py-1.5 relative after:content-[''] after:absolute after:w-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#333] after:transition-[width] after:duration-300 after:ease-in-out hover:after:w-full ${activeSection === 'registry' ? 'after:w-full' : ''}`}
             >
-              RSVP
+              Registry
             </a>
           </li>
         </ul>

@@ -3,12 +3,13 @@ import { useState } from 'react';
 import Header from './components/Header';
 import HomeSection from './components/HomeSection';
 import EventSection from './components/EventSection';
-import PhotosSection from './components/PhotosSection';
+import OurStorySection from './components/OurStorySection';
 import WeddingPartySection from './components/WeddingPartySection';
 import QAndASection from './components/QAndASection';
 import AccommodationsSection from "./components/AccommodationsSection";
 import ThingsToDoSection from './components/ThingsToDoSection';
 import RSVPSection from './components/RSVP/RSVPSection';
+import RegistrySection from './components/RegistrySection';
 import Footer from './components/Footer';
 
 export function App() {
@@ -43,12 +44,13 @@ export function App() {
         isActive={isHome}
       />
       
-      <PhotosSection isActive={activeSection === 'photos'} />
+      <OurStorySection isActive={activeSection === 'our-story'} />
       <WeddingPartySection isActive={activeSection === 'wedding-party'} />
       <QAndASection isActive={activeSection === 'q-and-a'} />
       <AccommodationsSection isActive={activeSection === 'accommodations'} />
       <ThingsToDoSection isActive={activeSection === 'things-to-do'} />
       <RSVPSection isActive={activeSection === 'rsvp'} />
+      <RegistrySection isActive={activeSection === 'registry'} />
       
       <Footer />
     </div>
